@@ -1,7 +1,6 @@
 {
-    "python.pythonPath": "/home/rgh/anaconda3/bin/python",
-
     "python.linting.pylintArgs": [
-        "--extension-pkg-whitelist=pygame"  // The extension is "lxml" not "1xml"
-    ]
+        "--extension-pkg-whitelist=pygame"  // The extension is "lxml"
+    ],
+    "editor.rulers": [80],
 }

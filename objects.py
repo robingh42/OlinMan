@@ -1,9 +1,13 @@
 import pygame
+from pygame.locals import *
+from olin_man_game import Viewer
+
 pygame.init()
 
 class Nonmovable(pygame.sprite.Sprite):
-    def __init__(self,points):
+    def __init__(self,image ,points=0):
         _points = points
+        self.image, self.rect = Viewer.load_image(image)
 
 
 class snack(Nonmovable):
