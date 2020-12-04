@@ -1,5 +1,5 @@
 import pygame
-
+pygame.init()
 
 class Game_state:
     

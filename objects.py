@@ -1,4 +1,5 @@
 import pygame
+pygame.init()
 
 class Nonmovable(pygame.sprite.Sprite):
     def __init__(self,points):
@@ -12,14 +13,14 @@ class snack(Nonmovable):
 
 class coffee(Nonmovable):
     def __init__(self):
-        pass
+        super().__init__(50)
 
 
 class wall(Nonmovable):
     def __init__(self):
-        pass
+        super().__init__(0)
 
 
 class cherry(Nonmovable):
     def __init__(self):
-        pass
+        super().__init__(1000)

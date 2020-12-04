@@ -1,6 +1,7 @@
 import pygame
+pygame.init()
 
-class Moveable_player(pygame.sprite.Sprite):
+class MoveablePlayer(pygame.sprite.Sprite):
     def __init__(self):
         self._x
         self._y
@@ -11,13 +12,13 @@ class Moveable_player(pygame.sprite.Sprite):
         pass
 
 
-class OlinMan(Moveable_player):
+class OlinMan(MoveablePlayer):
     def __init__(self):
         pass
 
 
 # Enemies to avoid
-class Ghost(Moveable_player):
+class Ghost(MoveablePlayer):
 
     def __init__(self):
         self._is_chase
