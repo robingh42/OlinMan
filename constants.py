@@ -6,7 +6,7 @@
     3 - Power up
     4 - Dot
 """
-map = [
+MAP = [
     # THREE BLACK LINES
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1],
@@ -42,4 +42,17 @@ map = [
     # TWO BLACK LINES
 ]
 
-print(len(map),len(map[4]))
+BLACK = (0,0,0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0,255,0)
+START_ORANGE = (170, 130, 60)
+OLIN_BLUE = (0,155,223)
+GREY = (100,100,100)
+
+FPS = 60
+WINDOW_SCALE = 16
+WINDOW_WIDTH = 28 * WINDOW_SCALE
+WINDOW_HEIGHT = 36 * WINDOW_SCALE
+
+print(len(MAP),len(MAP[4]))

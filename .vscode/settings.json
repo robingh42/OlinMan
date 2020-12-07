@@ -3,4 +3,10 @@
         "--extension-pkg-whitelist=pygame"  // The extension is "lxml"
     ],
     "editor.rulers": [80],
+    "colorize.files_extensions": [
+        ".py"
+      ],
+    "colorize.colorized_colors": [
+        "RGB"
+      ],
 }
