@@ -2,8 +2,9 @@ import pygame
 import os
 import sys
 from pygame.locals import *
-import objects, charaters
+import objects, characters
 import constants as const
+vec = pygame.math.Vector2
 
 pygame.init()
 
@@ -20,12 +21,15 @@ class Game_State:
 
         self._running = True
         self._start_screen = True
-        self._setup = False
 
         self.level = 0
-        self.walls = pygame.sprite.Group()
+        self.score = 0
+        self.walls = []
+        self.coins = []
+        self.coffees = []
         self.olinsprite = charaters.OlinMan(self, 3)
-        self.olinman = pygame.sprite.Group(self.olinsprite)
+        self.olinman = pygame.sprite.GroupSingle(self.olinsprite)
+        self.setup()
         # some pygame stuff
         #self._board = pygame.sprite.Group() # create a group of walls
         # create Olin man
@@ -34,30 +38,53 @@ class Game_State:
     def is_intro(self):
         return self.level == 0
 
-    def run(self):
-        while self._running:
-            if self.is_intro():
-                self.inputs.start_events()
-                self.view.start()
-            else :
-                if not self._setup:
-                    self.view.clear_Screen()
-                    #self.view.draw_background()
-                    self.view.draw_grid()
-                    self.view.draw_wall()
-                    self._setup = not self._setup
-                self.view.draw_play()
-                self.inputs.events()
-                #self.view.clear_Screen()
-                self.olinsprite.update()
-                #self.olinman.draw(self.view.window_screen)
-                pygame.display.update()
+    def is_running(self):
+        return self._running
+
+    def setup(self):
+        self.olinsprite = charaters.OlinMan(self, self.olinsprite.lives)
+        self.olinman = pygame.sprite.GroupSingle(self.olinsprite)
+        self.make_walls()
+        self.make_coins()
+        self.make_coffee()
+
+    def make_walls(self):
+        for row in range(len(const.MAP)):
+            for col in range(len(const.MAP[row])):
+                if const.MAP[row][col] == 1 or const.MAP[row][col] == 2:
+                    #self.window_screen.blit(
+                    #    self.wall, 
+                    #    (const.WINDOW_SCALE * col,
+                    #     const.WINDOW_SCALE * (row + 3))
+                    #)
+
+                    self.walls.append(vec(col,(row + 3)))
+
+    def make_coins(self):
+        for row in range(len(const.MAP)):
+            for col in range(len(const.MAP[row])):
+                if const.MAP[row][col] == 4:
+                    #self.window_screen.blit(
+                    #    self.wall, 
+                    #    (const.WINDOW_SCALE * col,
+                    #     const.WINDOW_SCALE * (row + 3))
+                    #)
+
+                    self.coins.append(vec(col,(row + 3)))
+
+    def make_coffee(self):
+        for row in range(len(const.MAP)):
+            for col in range(len(const.MAP[row])):
+                if const.MAP[row][col] == 3:
+                    #self.window_screen.blit(
+                    #    self.wall, 
+                    #    (const.WINDOW_SCALE * col,
+                    #     const.WINDOW_SCALE * (row + 3))
+                    #)
+                    print("added coffee")
+                    self.coffees.append(vec(col,(row + 3)))
                 
-            self.view.clock.tick(const.FPS)
-        print("Exiting..")
-        pygame.quit()
-        print("Done")
-        sys.exit()
+
     
 
     
@@ -99,7 +126,7 @@ class Controler:
                 pygame.quit()
                 print("Done")
                 sys.exit()
-            elif event.type == KEYDOWN:
+            elif event.type == KEYDOWN or event.type == KEYUP:
                 if event.key == K_w or event.key == K_UP:
                     self.state.olinsprite.move("up")
                     print("keyup")
@@ -114,7 +141,8 @@ class Controler:
                     print("keyR")
                 self.state.olinman.update()
                 #self.state.olinman.draw(self.state.view.window_screen)
-                
+    
+    
 
     
 
@@ -137,7 +165,6 @@ class Viewer:
         self.state = state
 
         self._text_size = 16
-
         self._font = pygame.font.Font(
             "PressStart2P-Regular.ttf",
             self._text_size
@@ -149,24 +176,31 @@ class Viewer:
             )
         self.window_screen.fill(const.BLACK)
 
-        
         self.clock = pygame.time.Clock()
+
+        self.background = self.object_image("Maze.jpeg",1,31)
+        self.wall = self.object_image("Wall.png")
+        self.coin = self.object_image("Coin.png")
+        self.coffee = self.object_image("Coffee.png",)
+        
         print("view init")
+
+
 
     def update_sprites(self):
         # Moves on screen sprite based on kep presses, or move methods
         pass
 
+    
+
     def clear_Screen(self):
         self.window_screen.fill(const.BLACK)
-        
 
     def start(self):
-        
         self.draw_txt(
             "HIGH SCORE",
             const.WHITE,
-            [0, 0 +9]
+            [0, 0 + 9]
             )
         self.draw_txt(
             "Olin Man:",
@@ -219,54 +253,44 @@ class Viewer:
 
 
     def draw_background(self):
-        fullname = os.path.join("images", "Maze.jpeg")
-        self.background = pygame.image.load(fullname)
-        self.background = pygame.transform.scale(
-            self.background, 
-            (const.WINDOW_WIDTH, 31 * const.WINDOW_SCALE)
-            )
         self.window_screen.blit(self.background, (0, const.WINDOW_SCALE * 3))
-        
         pygame.event.pump()
 
     def draw_wall(self):
-        full = os.path.join("images", "Wall.png")
-        self.wall = pygame.image.load(full)
-        full = os.path.join("images", "Coffee_24.png")
-        self.coffee = pygame.image.load(full)
-        self.coffee = pygame.transform.scale(
-            self.coffee, 
-            (const.WINDOW_SCALE, const.WINDOW_SCALE)
-            )
-        
-        for row in range(len(const.MAP)):
-            for col in range(len(const.MAP[row])):
-                if const.MAP[row][col] == 1:
-                    #self.window_screen.blit(
-                    #    self.wall, 
-                    #    (const.WINDOW_SCALE * col,
-                    #     const.WINDOW_SCALE * (row + 3))
-                    #)
-                    brick = objects.wall(self.state)
-                    self.state.walls.add(brick)
-                    brick.rect.x = col*const.WINDOW_SCALE
-                    brick.rect.y = (row + 3)*const.WINDOW_SCALE
-                    brick.draw([col,row + 3])
-                    
-                elif const.MAP[row][col] == 3:
-                    self.window_screen.blit(
-                        self.coffee, 
-                        (const.WINDOW_SCALE * col,
-                         const.WINDOW_SCALE * (row + 3))
+        for wall in self.state.walls:
+            self.window_screen.blit(
+                     self.wall, 
+                     (const.WINDOW_SCALE * wall[0],
+                     const.WINDOW_SCALE * wall[1])
                     )
         #self.state.olinman.draw(self.window_screen)
 
+    def draw_coins(self):
+        for coin in self.state.coins:
+            self.window_screen.blit(
+                     self.coin,
+                     (const.WINDOW_SCALE * coin[0],
+                     const.WINDOW_SCALE * coin[1])
+                    )
+
+    def draw_object(self, image, spaces):
+        for nonmovable_object in spaces:
+            print("print coffee")
+            self.window_screen.blit(
+                     image,
+                     (const.WINDOW_SCALE * nonmovable_object[0],
+                     const.WINDOW_SCALE * nonmovable_object[1])
+                    )
 
     def draw_play(self):
         self.clear_Screen()
         self.draw_wall()
         self.draw_grid()
-        self.window_screen.blit(self.state.olinsprite.image, (self.state.olinsprite.rect.x -4,self.state.olinsprite.rect.y-4))
+        self.draw_coins()
+        self.draw_object(self.coffee,self.state.coffees)
+        self.draw_txt(f"Score:{state.score}", const.WHITE, [0,9])
+        # self.draw_txt(f"Level:{state.level}", const.WHITE, [64,9], False)g
+        self.window_screen.blit(self.state.olinsprite.image, ((self.state.olinsprite.rect.x) -4,(self.state.olinsprite.rect.y)-4))
         pygame.draw.rect(
             self.window_screen,
             const.OLIN_BLUE,
@@ -277,8 +301,16 @@ class Viewer:
                 const.WINDOW_SCALE,
             ), 2
             )
-        
 
+    def object_image(self, name, x=1, y=1):
+        full = os.path.join("images", name)
+        obj_image, rect = self.load_image(name)
+        if rect.height != const.WINDOW_SCALE and rect.width == rect.height:
+            obj_image = pygame.transform.scale(
+                obj_image,
+                (x*const.WINDOW_SCALE, y*const.WINDOW_SCALE)
+                )
+        return obj_image
 
     @staticmethod
     def load_image(name):
@@ -291,11 +323,35 @@ class Viewer:
                 image = image.convert()
             else:
                 image = image.convert_alpha()
-        except pygame.error as message:
+        except pygame.error:
             print("Cannot load image:", fullname)
             raise SystemExit
         return image, image.get_rect()
 
+
 if __name__ == "__main__":
-    game = Game_State()
-    game.run()
+
+    state = Game_State()
+    view = Viewer(state)
+    control = Controler(state)
+
+    while state.is_running():
+        if state.is_intro():
+            control.start_events()
+            view.start()
+        else:
+            if state.coins == []:
+                state.setup()
+                state.level += 1
+            view.draw_play()
+            control.events()
+            #self.view.clear_Screen()
+            state.olinsprite.update()
+            #self.olinman.draw(self.view.window_screen)
+            pygame.display.update()
+            
+        view.clock.tick(const.FPS)
+    print("Exiting..")
+    pygame.quit()
+    print("Done")
+    sys.exit()

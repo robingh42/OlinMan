@@ -9,4 +9,11 @@
     "colorize.colorized_colors": [
         "RGB"
       ],
+      "python.testing.pytestArgs": [
+        "."
+      ],
+      "python.testing.unittestEnabled": false,
+      "python.testing.nosetestsEnabled": false,
+      "python.testing.pytestEnabled": true,
+      
 }
