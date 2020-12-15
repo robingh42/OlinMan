@@ -23,6 +23,7 @@ class MoveablePlayer(pygame.sprite.Sprite):
             int((self.rect.y+8)//const.WINDOW_SCALE)
             )
         self._speed = speed
+        self.dead = False
 
     def collision(self):
         pass
@@ -55,6 +56,8 @@ class MoveablePlayer(pygame.sprite.Sprite):
                 self.rect.x = const.WINDOW_SCALE * self.grid_pos[0]
                 self.rect.y = const.WINDOW_SCALE * self.grid_pos[1]
 
+    def revive(self, pos):
+        pass
 
     def move(self, direction):
         """
@@ -82,7 +85,7 @@ class MoveablePlayer(pygame.sprite.Sprite):
             # print(self.grid_pos+self.direction, wall)
         if vec(self.grid_pos+self.direction) in self.state.walls:
 
-            print("can't move")
+            #print("can't move")
 
             return False
         # print("can move")
@@ -96,7 +99,7 @@ class OlinMan(MoveablePlayer):
             self,
             state,
             [const.WINDOW_SCALE * 13.5, const.WINDOW_SCALE * 26],
-            2.5,
+            2,
             "Olinman.png")
 
         self.image = pygame.transform.scale(
@@ -117,12 +120,16 @@ class OlinMan(MoveablePlayer):
         super().update()
         if self.on_coin():
             self.eat_coin()
+        elif self.grid_pos == vec(1,17):
+            self.teleport(vec(24,17))
+        elif self.grid_pos == vec(26,17):
+            self.teleport(vec(3,17))
 
 
-    def teleport(self, pos, direction):
+    def teleport(self, pos):
         newpos = pygame.rect.Rect(
-            const.WINDOW_SCALE * pos,
-            const.WINDOW_SCALE * pos,
+            const.WINDOW_SCALE * pos[0],
+            const.WINDOW_SCALE * pos[1],
             const.WINDOW_SCALE,
             const.WINDOW_SCALE)
 
@@ -134,9 +141,10 @@ class OlinMan(MoveablePlayer):
                 int((self.rect.y+8)//const.WINDOW_SCALE)
                 )
                 
-            self.move(direction)
 
     def collision(self, ghost):
+        self.lives -= 1
+        self.dead = True
         if ghost.is_frightened:
             pass
 
@@ -201,7 +209,7 @@ class Ghost(MoveablePlayer):
         directions = [vec(0,-1), vec(0,1), vec(-1,0), vec(1,0)]
         for i in range(4):
                 # print(self.grid_pos+self.direction, wall)
-            if self.grid_pos + directions[i] not in self.state.walls:
+            if (self.grid_pos + directions[i] not in self.state.walls):
 
                 #print("can't move")
 
@@ -212,10 +220,12 @@ class Ghost(MoveablePlayer):
     def can_move(self):
         # print("start")
             # print(self.grid_pos+self.direction, wall)
-        if vec(self.grid_pos+self.direction) in self.state.walls:
+        if (vec(self.grid_pos+self.direction) in self.state.walls or
+            self.grid_pos+self.direction in [vec(5,17),vec(22,17)]
+            ):
 
-            print(self.grid_pos)
-            print(self.grid_pos+self.direction)
+            #print(self.grid_pos)
+            #print(self.grid_pos+self.direction)
 
             return False
         # print("can move")
@@ -230,14 +240,19 @@ class Ghost(MoveablePlayer):
 
         if (self.direction * -1) in directions:
             #print(f"removed: {self.direction * -1}")
+            print("---------------")
+            print(directions)
             directions.remove(self.direction * -1)
+            print(directions)
 
         if (self.direction != self.past_direct and
             self.past_direct in directions
             ):
             directions.remove(self.past_direct)
+        
+        #if (self.direction == self.past_direct and ):
 
-        for i in range(3):
+        for i in range(5):
             directions.append(self.direction)
         self.direction = random.choice(directions)
 
