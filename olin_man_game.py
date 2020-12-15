@@ -263,11 +263,13 @@ class Viewer:
 
     def draw_play(self):
         self.clear_Screen()
-        self.draw_wall()
-        self.draw_background()
+        #self.draw_wall()
+        #self.draw_background()
         # self.draw_grid()
-        self.draw_coins()
-        self.draw_object(self.coffee,self.state.coffees)
+        #self.draw_coins()
+        self.draw_object(self.wall, self.state.walls)
+        self.draw_object(self.coin, self.state.coins)
+        self.draw_object(self.coffee, self.state.coffees)
         self.draw_txt(f"Score:{state.score}", const.WHITE, [0,9])
         # self.draw_txt(f"Level:{state.level}", const.WHITE, [64,9], False)g
         self.update_sprites()

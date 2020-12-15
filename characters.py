@@ -22,6 +22,7 @@ class MoveablePlayer(pygame.sprite.Sprite):
             int((self.rect.x+8)//const.WINDOW_SCALE),
             int((self.rect.y+8)//const.WINDOW_SCALE)
             )
+        self.last_grid = self.grid_pos
         self._speed = speed
         self.dead = False
 
@@ -37,7 +38,9 @@ class MoveablePlayer(pygame.sprite.Sprite):
         if self.area.contains(newpos) and self.can_move():
             self.rect = newpos
             self.past_direct = self.direction
+            self.last_grid = self.grid_pos
 
+        
         self.grid_pos = vec(
             int((self.rect.x+8)//const.WINDOW_SCALE),
             int((self.rect.y+8)//const.WINDOW_SCALE)
@@ -80,6 +83,21 @@ class MoveablePlayer(pygame.sprite.Sprite):
         else:
             self.direction = self.past_direct
 
+    def teleport(self, pos):
+        newpos = pygame.rect.Rect(
+            const.WINDOW_SCALE * pos[0],
+            const.WINDOW_SCALE * pos[1],
+            const.WINDOW_SCALE,
+            const.WINDOW_SCALE)
+
+        if self.area.contains(newpos):
+            self.rect = newpos
+
+            self.grid_pos = vec(
+                int((self.rect.x+8)//const.WINDOW_SCALE),
+                int((self.rect.y+8)//const.WINDOW_SCALE)
+                )
+
     def can_move(self):
         # print("start")
             # print(self.grid_pos+self.direction, wall)
@@ -90,6 +108,7 @@ class MoveablePlayer(pygame.sprite.Sprite):
             return False
         # print("can move")
         return True
+
 
 
 class OlinMan(MoveablePlayer):
@@ -120,27 +139,12 @@ class OlinMan(MoveablePlayer):
         super().update()
         if self.on_coin():
             self.eat_coin()
+        elif self.on_coffee():
+            self.drink_coffee()
         elif self.grid_pos == vec(1,17):
             self.teleport(vec(24,17))
         elif self.grid_pos == vec(26,17):
-            self.teleport(vec(3,17))
-
-
-    def teleport(self, pos):
-        newpos = pygame.rect.Rect(
-            const.WINDOW_SCALE * pos[0],
-            const.WINDOW_SCALE * pos[1],
-            const.WINDOW_SCALE,
-            const.WINDOW_SCALE)
-
-        if self.area.contains(newpos):
-            self.rect = newpos
-
-            self.grid_pos = vec(
-                int((self.rect.x+8)//const.WINDOW_SCALE),
-                int((self.rect.y+8)//const.WINDOW_SCALE)
-                )
-                
+            self.teleport(vec(3,17))   
 
     def collision(self, ghost):
         self.lives -= 1
@@ -156,7 +160,7 @@ class OlinMan(MoveablePlayer):
             return False
 
     def on_coffee(self):
-        if self.grid_pos in self.state.coffee:
+        if self.grid_pos in self.state.coffees:
             return True
         else:
             return False
@@ -166,13 +170,13 @@ class OlinMan(MoveablePlayer):
         self.state.score += 10
 
     def drink_coffee(self):
-        self.state.coffee.remove(self.grid_pos)
+        self.state.coffees.remove(self.grid_pos)
         self.state.score += 50
 
 # Enemies to avoid
 class Ghost(MoveablePlayer):
 
-    def __init__(self, state, pos, speed):
+    def __init__(self, state, pos, speed, direction=vec(1,0)):
         self.is_frightened = False
         MoveablePlayer.__init__(
             self,
@@ -191,7 +195,7 @@ class Ghost(MoveablePlayer):
             const.WINDOW_SCALE,
             const.WINDOW_SCALE)
 
-        self.direction = vec(0,0)
+        self.direction = direction
         
 
     def frightened(self):
@@ -218,44 +222,27 @@ class Ghost(MoveablePlayer):
         return walls
 
     def can_move(self):
-        # print("start")
-            # print(self.grid_pos+self.direction, wall)
-        if (vec(self.grid_pos+self.direction) in self.state.walls or
+        if (
+            self.grid_pos+self.direction in self.state.walls or
             self.grid_pos+self.direction in [vec(5,17),vec(22,17)]
             ):
-
-            #print(self.grid_pos)
-            #print(self.grid_pos+self.direction)
-
             return False
-        # print("can move")
         return True
 
     def move(self):
+        if self.last_grid == self.grid_pos and self.can_move():
+            return
         paths = self.moves()
         directions = [vec(0,-1), vec(0,1), vec(-1,0), vec(1,0)]
-
         directions = [directions[i] for i in range(len(paths)) if paths[i] != 0]
         #print(directions, paths)
 
-        if (self.direction * -1) in directions:
-            #print(f"removed: {self.direction * -1}")
-            print("---------------")
-            print(directions)
+        if self.direction * -1 in directions:
             directions.remove(self.direction * -1)
-            print(directions)
 
-        if (self.direction != self.past_direct and
-            self.past_direct in directions
-            ):
-            directions.remove(self.past_direct)
-        
-        #if (self.direction == self.past_direct and ):
-
-        for i in range(5):
-            directions.append(self.direction)
-        self.direction = random.choice(directions)
-
-        if self.direction != self.past_direct:
-            self.past_direct = self.direction
-        
+        if len(directions) > 1:
+            for _ in range(3):
+                directions.append(self.direction)
+            self.direction = random.choice(directions)
+        else:
+            self.direction = directions[0]
