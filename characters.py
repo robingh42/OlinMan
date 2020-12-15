@@ -12,17 +12,14 @@ class MoveablePlayer(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.state = state
         self.area = state.view.window_screen.get_rect()
+
         self.image, self.rect = state.view.load_image(image)
         self.image = pygame.transform.scale(
             self.image,
             (24, 24)
             )
-        self.image2 = state.view.load_image(image2)[0]
-        self.image2 = pygame.transform.scale(
-            self.image2,
-            (24, 24)
-            )
-        print(pos[0], pos[1])
+        self.image2 = state.view.object_image(image2,1.5,1.5)
+
         self.rect = self.rect.move(pos[0], pos[1])
         self.past_direct = vec(0, 0)
         self.direction = vec(0, 0)
@@ -130,6 +127,7 @@ class OlinMan(MoveablePlayer):
             "Olinman.png",
             "Olinman_bounce.png")
 
+        self.image3 = state.view.object_image("Olinman_squeeze.png",1.5,1.5)
         self.rect = pygame.rect.Rect(
             const.WINDOW_SCALE * 13.5,
             const.WINDOW_SCALE * 26,

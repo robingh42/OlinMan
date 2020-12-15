@@ -21,7 +21,7 @@ class Game_State:
 
         self.running = True
         self._start_screen = True
-
+        self.ghost_speed = 2
         self.level = 0
         self.score = 0
         self.walls = []
@@ -29,7 +29,9 @@ class Game_State:
         self.coffees = []
         self.olinsprite = characters.OlinMan(self, 3)
         self.olinman = pygame.sprite.GroupSingle(self.olinsprite)
-        self.red_ghost = characters.Ghost(self, [13.5,14], 2)
+        self.red_ghost = characters.Ghost(self, [13.5,14], self.ghost_speed)
+        #self.blue_ghost = characters.Ghost(self, [13.5,14], self.ghost_speed, vec(-1,0))
+        #self.ghosts = pygame.sprite.Group(self.red_ghost,self.blue_ghost)
         self.ghosts = pygame.sprite.Group(self.red_ghost)
         self.setup()
         self.is_paused = False
@@ -52,13 +54,17 @@ class Game_State:
         self.is_paused = not self.is_paused
 
     def setup(self):
+        if not self.player_is_dead():
+            self.make_walls()
+            self.make_coins()
+            self.make_coffee()
         self.olinsprite = characters.OlinMan(self, self.olinsprite.lives)
         self.olinman = pygame.sprite.GroupSingle(self.olinsprite)
-        self.red_ghost = characters.Ghost(self, [13.5,14], 2)
+        self.red_ghost = characters.Ghost(self, [13.5,14], self.ghost_speed)
+        #self.blue_ghost = characters.Ghost(self, [13.5,14], self.ghost_speed, vec(-1,0))
+        #self.ghosts = pygame.sprite.Group(self.red_ghost,self.blue_ghost)
         self.ghosts = pygame.sprite.Group(self.red_ghost)
-        self.make_walls()
-        self.make_coins()
-        self.make_coffee()
+        
 
     def check_quarter_second(self):
         if pygame.time.get_ticks() % 500 > 250:
@@ -86,6 +92,9 @@ class Game_State:
 
     def player_is_dead(self):
         return self.olinsprite.dead
+
+    def player_is_vertical(self):
+        return self.olinsprite.direction in [vec(0,1), vec(0,-1)]
 
     def check_colide(self):
         ghost = pygame.sprite.spritecollide(self.olinsprite, self.ghosts, False)
@@ -124,8 +133,12 @@ class Controler:
                 print("Done")
                 sys.exit()
             if (event.type == pygame.KEYDOWN and
-                (event.key == pygame.K_p or event.key == pygame.K_ESCAPE)):
+                (event.key == pygame.K_p or
+                event.key == pygame.K_ESCAPE or
+                event.key == pygame.K_SPACE)
+                ):
                 self.state.pause()
+                print("resume")
     
     def events(self):
         for event in pygame.event.get():
@@ -136,10 +149,12 @@ class Controler:
                 print("Done")
                 sys.exit()
             elif (event.type == pygame.KEYDOWN and
-                (event.key == pygame.K_p or event.key == pygame.K_ESCAPE)):
+                (event.key == pygame.K_p or
+                event.key == pygame.K_ESCAPE or
+                event.key == pygame.K_SPACE)
+                ):
                 self.state.pause()
                 print("paused")
-                print(state.is_paused)
             elif event.type == KEYDOWN or event.type == KEYUP:
                 if event.key == K_w or event.key == K_UP:
                     self.state.olinsprite.move("up")
@@ -186,6 +201,7 @@ class Viewer:
         self.coin = self.object_image("Coin.png")
         self.post_it = self.object_image("Post_Its.png")
         self.coffee = self.object_image("Coffee.png",1.25,1.25)
+        self.heart = self.object_image("Life.png",2,2)
 
     def update_sprites(self):
         # Moves on screen sprite based on kep presses, or move methods
@@ -194,22 +210,18 @@ class Viewer:
             self.state.olinsprite.image,
             (self.state.olinsprite.rect.x - 4, self.state.olinsprite.rect.y -4))
         else:
+            if self.state.player_is_vertical():
+                self.window_screen.blit(
+                self.state.olinsprite.image3,
+                (self.state.olinsprite.rect.x - 4, self.state.olinsprite.rect.y -4))
+            else:
+                self.window_screen.blit(
+                self.state.olinsprite.image2,
+                (self.state.olinsprite.rect.x - 4, self.state.olinsprite.rect.y -4))
+        for ghost in self.state.ghosts:
             self.window_screen.blit(
-            self.state.olinsprite.image2,
-            (self.state.olinsprite.rect.x - 4, self.state.olinsprite.rect.y -4))
-        self.window_screen.blit(
-            self.state.red_ghost.image,
-            (self.state.red_ghost.rect.x - 4, self.state.red_ghost.rect.y - 4))
-        pygame.draw.rect(
-            self.window_screen,
-            const.OLIN_BLUE,
-            (
-                self.state.olinsprite.grid_pos[0] * const.WINDOW_SCALE,
-                self.state.olinsprite.grid_pos[1] * const.WINDOW_SCALE,
-                const.WINDOW_SCALE,
-                const.WINDOW_SCALE,
-            ), 2
-            )
+                ghost.image,
+                (ghost.rect.x - 4, ghost.rect.y - 4))
 
     def clear_Screen(self):
         self.window_screen.fill(const.BLACK)
@@ -273,22 +285,6 @@ class Viewer:
         self.window_screen.blit(self.background, (0, const.WINDOW_SCALE * 3))
         pygame.event.pump()
 
-    def draw_wall(self):
-        for wall in self.state.walls:
-            self.window_screen.blit(
-                     self.wall, 
-                     (const.WINDOW_SCALE * wall[0],
-                     const.WINDOW_SCALE * wall[1])
-                    )
-
-    def draw_coins(self):
-        for coin in self.state.coins:
-            self.window_screen.blit(
-                     self.post_it,
-                     (const.WINDOW_SCALE * coin[0],
-                     const.WINDOW_SCALE * coin[1])
-                    )
-
     def draw_object(self, image, spaces):
         for nonmovable_object in spaces:
             #print("print coffee")
@@ -297,17 +293,28 @@ class Viewer:
                      (const.WINDOW_SCALE * nonmovable_object[0],
                      const.WINDOW_SCALE * nonmovable_object[1])
                     )
+    
+    def draw_lives(self):
+        for life in range(self.state.olinsprite.lives):
+            #print("print coffee")
+            self.window_screen.blit(
+                     self.heart,
+                     (const.WINDOW_SCALE * (2 + 2.5 * life),
+                     const.WINDOW_SCALE * 34)
+                    )
 
     def draw_play(self):
         self.clear_Screen()
-        #self.draw_wall()
-        #self.draw_background()
+        # self.draw_background()
         # self.draw_grid()
-        #self.draw_coins()
         self.draw_object(self.wall, self.state.walls)
-        self.draw_object(self.coin, self.state.coins)
+        if state.level % 2 == 1:
+            self.draw_object(self.post_it, self.state.coins)
+        else:
+            self.draw_object(self.coin, self.state.coins)
         self.draw_object(self.coffee, self.state.coffees)
         self.draw_txt(f"Score:{state.score}", const.WHITE, [0,9])
+        self.draw_lives()
         # self.draw_txt(f"Level:{state.level}", const.WHITE, [64,9], False)g
         self.update_sprites()
     
@@ -327,8 +334,9 @@ class Viewer:
             title=True)
         pygame.display.update()
 
-    def object_image(self, name, x=1, y=1):
-        obj_image = self.load_image(name)[0]
+    @staticmethod
+    def object_image( name, x=1, y=1):
+        obj_image = Viewer.load_image(name)[0]
         if x != const.WINDOW_SCALE and y != const.WINDOW_SCALE:
             print(name)
             obj_image = pygame.transform.scale(
