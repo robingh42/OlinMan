@@ -54,6 +54,8 @@ class Game_State:
         self.is_paused = not self.is_paused
 
     def setup(self):
+        if not self.is_intro():
+            view.countdown()
         if not self.player_is_dead():
             self.make_walls()
             self.make_coins()
@@ -318,6 +320,17 @@ class Viewer:
         # self.draw_txt(f"Level:{state.level}", const.WHITE, [64,9], False)g
         self.update_sprites()
     
+    def countdown(self):
+        for count in ["Three","Two","One"]:
+            self.draw_play()
+            self.draw_txt(
+                count,
+                const.WHITE,
+                [0, const.WINDOW_HEIGHT/2],
+                title=True)
+            pygame.display.update()
+            pygame.time.wait(1000)
+
     def pause(self):
         self.draw_txt(
             "Paused",
@@ -376,7 +389,7 @@ if __name__ == "__main__":
                 state.level += 1
             elif state.is_gameover():
                 view.game_over()
-                pygame.time.wait(4000)
+                pygame.time.wait(3000)
                 state.running = False
             elif state.player_is_dead():
                 state.setup()
@@ -384,6 +397,7 @@ if __name__ == "__main__":
                 view.pause()
                 while state.is_paused:
                     control.pause_events()
+                view.countdown()
             state.check_colide()
             view.draw_play()
             control.events()
