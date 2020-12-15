@@ -13,7 +13,10 @@ class MoveablePlayer(pygame.sprite.Sprite):
         self.state = state
         self.area = state.view.window_screen.get_rect()
         self.image, self.rect = state.view.load_image(image)
-
+        self.image = pygame.transform.scale(
+            self.image,
+            (24, 24)
+            )
         print(pos[0], pos[1])
         self.rect = self.rect.move(pos[0], pos[1])
         self.past_direct = vec(0, 0)
@@ -28,6 +31,9 @@ class MoveablePlayer(pygame.sprite.Sprite):
 
     def collision(self):
         pass
+
+    def revive(self):
+        self.dead = False
 
     def update(self):
         # print(self.direction)
@@ -58,9 +64,6 @@ class MoveablePlayer(pygame.sprite.Sprite):
                 #print("selfcorrect")
                 self.rect.x = const.WINDOW_SCALE * self.grid_pos[0]
                 self.rect.y = const.WINDOW_SCALE * self.grid_pos[1]
-
-    def revive(self, pos):
-        pass
 
     def move(self, direction):
         """
@@ -121,11 +124,6 @@ class OlinMan(MoveablePlayer):
             2,
             "Olinman.png")
 
-        self.image = pygame.transform.scale(
-            self.image,
-            (24, 24)
-            )
-
         self.rect = pygame.rect.Rect(
             const.WINDOW_SCALE * 13.5,
             const.WINDOW_SCALE * 26,
@@ -151,7 +149,6 @@ class OlinMan(MoveablePlayer):
         self.dead = True
         if ghost.is_frightened:
             pass
-
 
     def on_coin(self):
         if self.grid_pos in self.state.coins:
@@ -184,10 +181,6 @@ class Ghost(MoveablePlayer):
             [const.WINDOW_SCALE * pos[0], const.WINDOW_SCALE * pos[1]],
             speed,
             "Red_Ghost.png")
-        self.image = pygame.transform.scale(
-            self.image,
-            (24, 24)
-            )
 
         self.rect = pygame.rect.Rect(
             const.WINDOW_SCALE * pos[0],

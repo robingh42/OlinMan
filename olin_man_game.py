@@ -6,7 +6,6 @@ import characters
 import constants as const
 import random
 vec = pygame.math.Vector2
-
 pygame.init()
 
 
@@ -33,6 +32,7 @@ class Game_State:
         self.red_ghost = characters.Ghost(self, [13.5,14], 2)
         self.ghosts = pygame.sprite.Group(self.red_ghost)
         self.setup()
+        self.is_paused = False
 
     def is_intro(self):
         return self.level == 0
@@ -40,9 +40,14 @@ class Game_State:
     def isrunning(self):
         return self.running
 
+    def pause(self):
+        self.is_paused = not self.is_paused
+
     def setup(self):
         self.olinsprite = characters.OlinMan(self, self.olinsprite.lives)
         self.olinman = pygame.sprite.GroupSingle(self.olinsprite)
+        self.red_ghost = characters.Ghost(self, [13.5,14], 2)
+        self.ghosts = pygame.sprite.Group(self.red_ghost)
         self.make_walls()
         self.make_coins()
         self.make_coffee()
@@ -64,6 +69,15 @@ class Game_State:
             for col in range(len(const.MAP[row])):
                 if const.MAP[row][col] == 3:
                     self.coffees.append(vec(col,(row + 3)))
+
+    def player_is_dead(self):
+        return self.olinsprite.dead
+
+    def check_colide(self):
+        ghost = pygame.sprite.spritecollide(self.olinsprite, self.ghosts, False)
+        if ghost != []:
+            print("****colision****")
+            self.olinsprite.collision(ghost[0])
 
 
 class Controler:
@@ -97,8 +111,7 @@ class Controler:
                 sys.exit()
             if (event.type == pygame.KEYDOWN and
                 (event.key == pygame.K_p or event.key == pygame.K_ESCAPE)):
-                pass
-                # self.state.pause()
+                self.state.pause()
     
     def events(self):
         for event in pygame.event.get():
@@ -108,6 +121,11 @@ class Controler:
                 pygame.quit()
                 print("Done")
                 sys.exit()
+            elif (event.type == pygame.KEYDOWN and
+                (event.key == pygame.K_p or event.key == pygame.K_ESCAPE)):
+                self.state.pause()
+                print("paused")
+                print(state.is_paused)
             elif event.type == KEYDOWN or event.type == KEYUP:
                 if event.key == K_w or event.key == K_UP:
                     self.state.olinsprite.move("up")
@@ -122,10 +140,7 @@ class Controler:
                     self.state.olinsprite.move("right")
                     print("keyR")
                 self.state.olinman.update()
-            elif (event.type == pygame.KEYDOWN and
-                (event.key == pygame.K_p or event.key == pygame.K_ESCAPE)):
-                # self.state.pause()
-                pass
+            
 
 
 class Viewer:
@@ -161,8 +176,12 @@ class Viewer:
 
     def update_sprites(self):
         # Moves on screen sprite based on kep presses, or move methods
-        self.window_screen.blit(self.state.olinsprite.image, ((self.state.olinsprite.rect.x) -4,(self.state.olinsprite.rect.y)-4))
-        self.window_screen.blit(self.state.red_ghost.image, ((self.state.red_ghost.rect.x),(self.state.red_ghost.rect.y)))
+        self.window_screen.blit(
+            self.state.olinsprite.image,
+            (self.state.olinsprite.rect.x - 4, self.state.olinsprite.rect.y -4))
+        self.window_screen.blit(
+            self.state.red_ghost.image,
+            (self.state.red_ghost.rect.x - 4, self.state.red_ghost.rect.y - 4))
         pygame.draw.rect(
             self.window_screen,
             const.OLIN_BLUE,
@@ -273,6 +292,21 @@ class Viewer:
         self.draw_txt(f"Score:{state.score}", const.WHITE, [0,9])
         # self.draw_txt(f"Level:{state.level}", const.WHITE, [64,9], False)g
         self.update_sprites()
+    
+    def pause(self):
+        self.draw_txt(
+            "Paused",
+            const.START_ORANGE,
+            [0, const.WINDOW_HEIGHT/2],
+            title=True)
+        pygame.display.update()
+
+    def game_over(self):
+        self.draw_txt(
+            "GAME OVER",
+            const.RED,
+            [0, const.WINDOW_HEIGHT/2],
+            title=True)
 
     def object_image(self, name, x=1, y=1):
         obj_image = self.load_image(name)[0]
@@ -313,6 +347,13 @@ if __name__ == "__main__":
             if state.coins == []:
                 state.setup()
                 state.level += 1
+            elif state.player_is_dead():
+                state.setup()
+            elif state.is_paused:
+                view.pause()
+                while state.is_paused:
+                    control.pause_events()
+            state.check_colide()
             view.draw_play()
             control.events()
             #self.view.clear_Screen()
