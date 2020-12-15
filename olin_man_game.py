@@ -34,11 +34,19 @@ class Game_State:
         self.setup()
         self.is_paused = False
 
+        self.clock = pygame.time.Clock()
+
     def is_intro(self):
         return self.level == 0
 
-    def isrunning(self):
+    def is_running(self):
         return self.running
+
+    def is_gameover(self):
+        if self.olinsprite.lives < 1:
+            return True
+        else:
+            return False
 
     def pause(self):
         self.is_paused = not self.is_paused
@@ -51,6 +59,12 @@ class Game_State:
         self.make_walls()
         self.make_coins()
         self.make_coffee()
+
+    def check_quarter_second(self):
+        if pygame.time.get_ticks() % 500 > 250:
+            return True
+        else:
+            return False
 
     def make_walls(self):
         for row in range(len(const.MAP)):
@@ -166,7 +180,6 @@ class Viewer:
             )
         self.window_screen.fill(const.BLACK)
 
-        self.clock = pygame.time.Clock()
 
         self.background = self.object_image("Maze.jpeg", x=28, y=31)
         self.wall = self.object_image("Wall.png")
@@ -176,8 +189,13 @@ class Viewer:
 
     def update_sprites(self):
         # Moves on screen sprite based on kep presses, or move methods
-        self.window_screen.blit(
+        if state.check_quarter_second():
+            self.window_screen.blit(
             self.state.olinsprite.image,
+            (self.state.olinsprite.rect.x - 4, self.state.olinsprite.rect.y -4))
+        else:
+            self.window_screen.blit(
+            self.state.olinsprite.image2,
             (self.state.olinsprite.rect.x - 4, self.state.olinsprite.rect.y -4))
         self.window_screen.blit(
             self.state.red_ghost.image,
@@ -220,7 +238,7 @@ class Viewer:
             )
 
         pygame.display.update()
-        self.clock.tick(const.FPS)
+        self.state.clock.tick(const.FPS)
 
     def draw_txt(self, text, RGB_color, pos, center=True, title=False):
         text_to_print = self._font.render(text, False, RGB_color)
@@ -307,6 +325,7 @@ class Viewer:
             const.RED,
             [0, const.WINDOW_HEIGHT/2],
             title=True)
+        pygame.display.update()
 
     def object_image(self, name, x=1, y=1):
         obj_image = self.load_image(name)[0]
@@ -339,7 +358,7 @@ if __name__ == "__main__":
     view = Viewer(state)
     control = Controler(state)
 
-    while state.isrunning():
+    while state.is_running():
         if state.is_intro():
             control.start_events()
             view.start()
@@ -347,6 +366,10 @@ if __name__ == "__main__":
             if state.coins == []:
                 state.setup()
                 state.level += 1
+            elif state.is_gameover():
+                view.game_over()
+                pygame.time.wait(4000)
+                state.running = False
             elif state.player_is_dead():
                 state.setup()
             elif state.is_paused:
@@ -361,8 +384,7 @@ if __name__ == "__main__":
             state.ghosts.update()
             #self.olinman.draw(self.view.window_screen)
             pygame.display.update()
-            
-        view.clock.tick(const.FPS)
+            state.clock.tick(const.FPS)
     print("Exiting..")
     pygame.quit()
     print("Done")

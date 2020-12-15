@@ -8,13 +8,18 @@ pygame.init()
 
 
 class MoveablePlayer(pygame.sprite.Sprite):
-    def __init__(self, state, pos, speed, image):
+    def __init__(self, state, pos, speed, image, image2):
         pygame.sprite.Sprite.__init__(self)
         self.state = state
         self.area = state.view.window_screen.get_rect()
         self.image, self.rect = state.view.load_image(image)
         self.image = pygame.transform.scale(
             self.image,
+            (24, 24)
+            )
+        self.image2 = state.view.load_image(image2)[0]
+        self.image2 = pygame.transform.scale(
+            self.image2,
             (24, 24)
             )
         print(pos[0], pos[1])
@@ -122,7 +127,8 @@ class OlinMan(MoveablePlayer):
             state,
             [const.WINDOW_SCALE * 13.5, const.WINDOW_SCALE * 26],
             2,
-            "Olinman.png")
+            "Olinman.png",
+            "Olinman_bounce.png")
 
         self.rect = pygame.rect.Rect(
             const.WINDOW_SCALE * 13.5,
@@ -180,7 +186,8 @@ class Ghost(MoveablePlayer):
             state,
             [const.WINDOW_SCALE * pos[0], const.WINDOW_SCALE * pos[1]],
             speed,
-            "Red_Ghost.png")
+            "Red_Ghost.png",
+            "Fright_Ghost.png")
 
         self.rect = pygame.rect.Rect(
             const.WINDOW_SCALE * pos[0],

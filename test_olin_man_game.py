@@ -28,7 +28,7 @@ def test_ghost_can_move(direction, bool_check):
     player.direction = direction
     assert player.can_move() == bool_check
 
-@pytest.mark.parametrize('execution_number', range(20))
+@pytest.mark.parametrize("execution_number", range(20))
 def test_ghost_corner(execution_number):
     backwards = False
     state = olin_man_game.Game_State()
