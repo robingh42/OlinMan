@@ -5,6 +5,7 @@ from pygame.locals import *
 import characters
 import constants as const
 import random
+from pathlib import Path
 vec = pygame.math.Vector2
 pygame.init()
 
@@ -21,16 +22,16 @@ class Game_State:
 
         self.running = True
         self._start_screen = True
-        self.ghost_speed = 2
-        self.level = 0
+        self._ghost_speed = 2
+        self._level = 0
         self.score = 0
         self.walls = []
         self.coins = []
         self.coffees = []
         self.olinsprite = characters.OlinMan(self, 3)
         self.olinman = pygame.sprite.GroupSingle(self.olinsprite)
-        self.red_ghost = characters.Ghost(self, [13.5,14], self.ghost_speed)
-        #self.blue_ghost = characters.Ghost(self, [13.5,14], self.ghost_speed, vec(-1,0))
+        self.red_ghost = characters.Ghost(self, [13.5,14], self._ghost_speed)
+        #self.blue_ghost = characters.Ghost(self, [13.5,14], self._ghost_speed, vec(-1,0))
         #self.ghosts = pygame.sprite.Group(self.red_ghost,self.blue_ghost)
         self.ghosts = pygame.sprite.Group(self.red_ghost)
         self.setup()
@@ -39,7 +40,7 @@ class Game_State:
         self.clock = pygame.time.Clock()
 
     def is_intro(self):
-        return self.level == 0
+        return self._level == 0
 
     def is_running(self):
         return self.running
@@ -49,6 +50,9 @@ class Game_State:
             return True
         else:
             return False
+    
+    def get_level(self):
+        return self._level
 
     def pause(self):
         self.is_paused = not self.is_paused
@@ -62,8 +66,8 @@ class Game_State:
             self.make_coffee()
         self.olinsprite = characters.OlinMan(self, self.olinsprite.lives)
         self.olinman = pygame.sprite.GroupSingle(self.olinsprite)
-        self.red_ghost = characters.Ghost(self, [13.5,14], self.ghost_speed)
-        #self.blue_ghost = characters.Ghost(self, [13.5,14], self.ghost_speed, vec(-1,0))
+        self.red_ghost = characters.Ghost(self, [13.5,14], self._ghost_speed)
+        #self.blue_ghost = characters.Ghost(self, [13.5,14], self._ghost_speed, vec(-1,0))
         #self.ghosts = pygame.sprite.Group(self.red_ghost,self.blue_ghost)
         self.ghosts = pygame.sprite.Group(self.red_ghost)
         
@@ -103,6 +107,41 @@ class Game_State:
         if ghost != []:
             print("****colision****")
             self.olinsprite.collision(ghost[0])
+    
+    def update_highscore(self):
+        if self.get_highscore() < self.score:
+            self.save_highscore(self.score)
+            print("You beat the highscore!")
+            return True
+        return False
+
+    @staticmethod
+    def save_highscore(score):
+        """
+        Saves the highscore
+        Assumes the directory link_data
+        Args:
+            score: (int) the highest score achieved
+        Returns true is the the file is created/updated, false if is not created
+        """
+        # Open a file in the directory linkdata with the file name "title"
+        # and save all the links in the file
+        with open("highscore.txt", "w") as file:
+            file.write(f"{score}")
+            return True
+        return False
+
+    @staticmethod
+    def get_highscore():
+        """
+        Checks if the file exists and returns the highscore
+        Returns a highscore (int)
+        """
+        if not Path("highscore.txt").is_file():
+            return 0
+        with open("highscore.txt", "r") as file:
+            read_data = file.read()
+        return int(read_data)
 
 
 class Controler:
@@ -123,13 +162,15 @@ class Controler:
                 print("Done")
                 sys.exit()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                self.state.level += 1
-                print("level:",self.state.level)
+                self.state._level += 1
+                print("_level:", self.state.get_level())
     
     def pause_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.state.running = False
+                print("Checking highscore")
+                state.update_highscore()
                 print("Exiting..")
                 pygame.quit()
                 print("Done")
@@ -142,14 +183,11 @@ class Controler:
                 self.state.pause()
                 print("resume")
     
+    
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.state.running = False
-                print("Exiting..")
-                pygame.quit()
-                print("Done")
-                sys.exit()
             elif (event.type == pygame.KEYDOWN and
                 (event.key == pygame.K_p or
                 event.key == pygame.K_ESCAPE or
@@ -235,6 +273,11 @@ class Viewer:
             [0, 0 + 9]
             )
         self.draw_txt(
+            f"{self.state.get_highscore()}",
+            const.WHITE,
+            [0, 9 + 16]
+            )
+        self.draw_txt(
             "Olin Man:",
             const.OLIN_BLUE,
             [0, const.WINDOW_HEIGHT / 4],
@@ -249,6 +292,16 @@ class Viewer:
             "Press [Space] to Play",
             const.START_ORANGE,
             [0, const.WINDOW_HEIGHT / 2]
+            )
+        self.draw_txt(
+            "Created by",
+            const.WHITE,
+            [0, const.WINDOW_HEIGHT - 40]
+            )
+        self.draw_txt(
+            "Robin Graham-Hayes",
+            const.WHITE,
+            [0, const.WINDOW_HEIGHT - 16]
             )
 
         pygame.display.update()
@@ -310,14 +363,14 @@ class Viewer:
         # self.draw_background()
         # self.draw_grid()
         self.draw_object(self.wall, self.state.walls)
-        if state.level % 2 == 1:
+        if state.get_level() % 2 == 1:
             self.draw_object(self.post_it, self.state.coins)
         else:
             self.draw_object(self.coin, self.state.coins)
         self.draw_object(self.coffee, self.state.coffees)
         self.draw_txt(f"Score:{state.score}", const.WHITE, [0,9])
         self.draw_lives()
-        # self.draw_txt(f"Level:{state.level}", const.WHITE, [64,9], False)g
+        # self.draw_txt(f"_Level:{state._level}", const.WHITE, [64,9], False)g
         self.update_sprites()
     
     def countdown(self):
@@ -338,6 +391,15 @@ class Viewer:
             [0, const.WINDOW_HEIGHT/2],
             title=True)
         pygame.display.update()
+
+    def you_died(self):
+        self.draw_txt(
+            "You Died",
+            const.RED,
+            [0, const.WINDOW_HEIGHT/2],
+            title=True)
+        pygame.display.update()
+        pygame.time.wait(1000)
 
     def game_over(self):
         self.draw_txt(
@@ -386,12 +448,13 @@ if __name__ == "__main__":
         else:
             if state.coins == []:
                 state.setup()
-                state.level += 1
+                state._level += 1
             elif state.is_gameover():
                 view.game_over()
                 pygame.time.wait(3000)
                 state.running = False
             elif state.player_is_dead():
+                view.you_died()
                 state.setup()
             elif state.is_paused:
                 view.pause()
@@ -407,6 +470,8 @@ if __name__ == "__main__":
             #self.olinman.draw(self.view.window_screen)
             pygame.display.update()
             state.clock.tick(const.FPS)
+    print("Checking highscore")
+    state.update_highscore()
     print("Exiting..")
     pygame.quit()
     print("Done")
