@@ -16,7 +16,7 @@ directions = [
 def test_can_move(direction, bool_check):
     state = olin_man_game.Game_State()
     state.make_walls()
-    player = characters.OlinMan(state, 1)
+    player = state.olinsprite
     player.direction = direction
     assert player.can_move() == bool_check
 
@@ -24,8 +24,8 @@ def test_can_move(direction, bool_check):
 def test_ghost_can_move(direction, bool_check):
     state = olin_man_game.Game_State()
     state.make_walls()
-    player = characters.Ghost(state, [3, 4], 2)
-    player.direction = direction
+    player = characters.Ghost(state, vec(3,4), 2, direction)
+    print(player._grid_pos)
     assert player.can_move() == bool_check
 
 @pytest.mark.parametrize("execution_number", range(20))
