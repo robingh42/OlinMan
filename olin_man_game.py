@@ -138,9 +138,9 @@ class Game_State:
 
     def check_quarter_second(self):
         """
-        Checks if a quarter second has passed.
+        Check if a quarter second has passed.
 
-        Returns (True) if a quarter second has passed,
+        Return (True) if a quarter second has passed,
             (False) if a half second has passed
         """
         if pygame.time.get_ticks() % 500 > 250:
@@ -154,7 +154,7 @@ class Game_State:
         """
         for row in range(len(const.MAP)):
             for col in range(len(const.MAP[row])):
-                # checks if the position is a wall or ghost wall
+                # check if the position is a wall or ghost wall
                 if const.MAP[row][col] == 1 or const.MAP[row][col] == 2:
                     self.walls.append(vec(col, (row + 3)))
 
@@ -178,9 +178,9 @@ class Game_State:
 
     def check_colide(self):
         """
-        Checks if OlinMan has ran into a ghost and calls OlinMan's collision()
+        Check if OlinMan has ran into a ghost and calls OlinMan's collision()
 
-        Returns (True) if there is a colision
+        Return (True) if there is a colision
         """
 
         # finds all the ghosts coliding with Olin man
@@ -195,9 +195,9 @@ class Game_State:
 
     def update_highscore(self):
         """
-        Checks if the highscore was beat and saves the highscore to a file
+        Check if the highscore was beat and saves the highscore to a file
 
-        Returns (True) if the highscore was beat
+        Return (True) if the highscore was beat
         """
         if self.get_highscore() < self.score:
             self.save_highscore(self.score)
@@ -213,7 +213,7 @@ class Game_State:
         Args:
             score: (int) the highest score achieved
 
-        Returns (True) if the file is created/updated
+        Return (True) if the file is created/updated
         """
         # Open a file in the directory linkdata with the file name "title"
         # and save all the links in the file
@@ -225,8 +225,8 @@ class Game_State:
     @staticmethod
     def get_highscore():
         """
-        Checks if the file exists and returns the highscore
-        Returns a highscore (int)
+        Check if the file exists and return the highscore
+        Return a highscore (int)
         """
         if not Path("highscore.txt").is_file():
             return 0
@@ -253,7 +253,7 @@ class Controler:
 
     def start_events(self):
         """
-        Checks keypresses during the start of the game
+        Check keypresses during the start of the game
         """
         for event in pygame.event.get():
             # if the window was closed, end the game
@@ -270,7 +270,7 @@ class Controler:
 
     def pause_events(self):
         """
-        Checks keypresses during the pause menu
+        Check keypresses during the pause menu
         """
         for event in pygame.event.get():
             # if the window was closed, end the game
@@ -293,7 +293,7 @@ class Controler:
 
     def events(self):
         """
-        Checks keypresses during the main game
+        Check keypresses during the main game
         """
         for event in pygame.event.get():
             # if the window was closed, end the game
@@ -339,14 +339,14 @@ class Viewer:
         heart: a (pygame.image) of the heart of OlinMan
     """
 
-    def __init__(self, state):
+    def __init__(self, game):
         """
         Creates a Viewer instance
 
         args:
             state: a (GameState) to access the conditions of the board
         """
-        self.state = state
+        self.state = game
 
         # set up the font
         self._text_size = 16
@@ -365,7 +365,7 @@ class Viewer:
         self.background = self.object_image("Maze.jpeg", x=28, y=31)
         self.wall = self.object_image("Wall.png")
         self.coin = self.object_image("Coin.png")
-        self.post_it = self.object_image("Post_Its.png")
+        self.post_it = self.object_image("Post_Its2.png")
         self.coffee = self.object_image("Coffee.png", 1.25, 1.25)
         self.heart = self.object_image("Life.png", 2, 2)
 
@@ -538,7 +538,7 @@ class Viewer:
 
     def draw_play(self):
         """
-        Updates the screen. Clears the screen and then draws all
+        Update the screen. Clears the screen and then draws all
             the objects and sprites to the screen
         """
         self.clear_Screen()
@@ -607,7 +607,7 @@ class Viewer:
     @staticmethod
     def object_image(name, x=1, y=1):
         """
-        Returns a (pygame.image) for the game objects
+        Return a (pygame.image) for the game objects
 
         args:
             name: a file name (string) to find the image to load
@@ -624,7 +624,7 @@ class Viewer:
     @staticmethod
     def load_image(name):
         """
-        Loads an image and returns:
+        Loads an image and return:
             the image (pygame.image), the image's rect (pygame.rect)
 
         args:
@@ -634,7 +634,7 @@ class Viewer:
 
         image = pygame.image.load(fullname)
 
-        # Checks if the image has transparency and maintains it
+        # Check if the image has transparency and maintains it
         # Converts the image to maintain color format
         if image.get_alpha is None:
             image = image.convert()

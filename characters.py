@@ -91,7 +91,7 @@ class MoveablePlayer(pygame.sprite.Sprite):
 
     def update(self):
         """
-        Updates the charater's position each frame
+        Update the charater's position each frame
         Checks if the position can be updated.
         """
         # create a copy of rect in the new position
@@ -111,7 +111,7 @@ class MoveablePlayer(pygame.sprite.Sprite):
             int((self.rect.y+8)//const.WINDOW_SCALE)
             )
 
-        # if the direction has changed, center the sprite in the grid
+        # if the direction has not changed, center the sprite in the grid
         if self._last_direct == self.direction:
 
             # if the sprite is moving vertialy center them horizontaly
@@ -124,6 +124,16 @@ class MoveablePlayer(pygame.sprite.Sprite):
             if not self.can_move():
                 self.rect.x = const.WINDOW_SCALE * self._grid_pos[0]
                 self.rect.y = const.WINDOW_SCALE * self._grid_pos[1]
+
+    def set_speed(self, speed):
+        """
+        Takes a given direction as a (string) and sets the charater's direction
+        as a (pygame.Vector2)
+
+        args:
+            speed: an (int) depicting the number of pixels to move per frame
+        """
+        self._speed = speed
 
     def move(self, direction):
         """
@@ -154,10 +164,22 @@ class MoveablePlayer(pygame.sprite.Sprite):
         else:
             self.direction = self._last_direct
 
+    def get_moves(self):
+        """
+        Return a (list) of all directions (pygame.Vector2) the ghost can move
+        """
+        walls = [True, True, True, True]
+        directions = [vec(0, -1), vec(0, 1), vec(-1, 0), vec(1, 0)]
+        for i in range(4):
+            if self._grid_pos + directions[i] not in self.state.walls:
+                walls[i] = False
+        # only return directions without a wall
+        return [directions[i] for i in range(len(walls)) if walls[i] is False]
+
     def teleport(self, pos):
         """
         Takes a given grid position as a (pygame.Vector2) and sets the
-        charater's direction as a (pygame.Vector2)
+        charater's position
 
         args:
             pos: a (pygame.Vector2) the new grid position for the player
@@ -177,14 +199,41 @@ class MoveablePlayer(pygame.sprite.Sprite):
                 int((self.rect.x+8)//const.WINDOW_SCALE),
                 int((self.rect.y+8)//const.WINDOW_SCALE)
                 )
+        self._last_grid = self._grid_pos
 
     def can_move(self):
         """
-        Returns a (bool) if there is a wall in the sprites next position
+        Return a (bool) if there is a wall in the sprites next position
         """
         if vec(self._grid_pos + self.direction) in self.state.walls:
             return False
         return True
+
+    def get_pos(self):
+        """
+        Return the players current position on the grid as a (pygame.Vector2)
+        """
+        return self._grid_pos
+
+    def get_last_pos(self):
+        """
+        Return the players last grid position as a (pygame.Vector2)
+        """
+        return self._last_grid
+
+    def reset(self, pos, direction):
+        """
+        Resets the sprite by placing them in a new position
+            and setting a new direction
+
+        args:
+            direction: the direction (pygame.Vector2) the sprite will move
+            depicted in change in postion
+            pos: a (pygame.Vector2) the new position of the sprite
+            on the grid
+        """
+        self.teleport(pos)
+        self.direction = direction
 
 
 class OlinMan(MoveablePlayer):
@@ -221,7 +270,7 @@ class OlinMan(MoveablePlayer):
 
     def update(self):
         """
-        Updates the charater's position each frame
+        Update the charater's position each frame
         Checks if the position can be updated.
         Check is the player has interacted with an object and update the object
         Checks for tunnel usage
@@ -240,14 +289,14 @@ class OlinMan(MoveablePlayer):
 
     def collision(self):
         """
-        Updates the player after a colision. Remove a life and kill the player.
+        Update the player after a colision. Remove a life and kill the player.
         """
         self.lives -= 1
         self.dead = True
 
     def on_coin(self):
         """
-        Checks if the player is on a coin. Returns a (bool).
+        Checks if the player is on a coin. Return a (bool).
         """
         if self._grid_pos in self.state.coins:
             return True
@@ -256,7 +305,7 @@ class OlinMan(MoveablePlayer):
 
     def on_coffee(self):
         """
-        Checks if the player is on a coffee. Returns a (bool).
+        Checks if the player is on a coffee. Return a (bool).
         """
         if self._grid_pos in self.state.coffees:
             return True
@@ -276,6 +325,20 @@ class OlinMan(MoveablePlayer):
         """
         self.state.coffees.remove(self._grid_pos)
         self.state.score += 50
+
+    def reset(self, pos=vec(13.5, 26), direction=vec(0, 0)):
+        """
+        Resets the player by placing them in a new position
+            and clearing direction
+
+        args:
+            direction: the direction (pygame.Vector2) the sprite will move
+            depicted in change in postion
+            pos: a (pygame.Vector2) the new position of the sprite
+            on the grid
+        """
+        self.teleport(pos)
+        self.direction = direction
 
 
 class Ghost(MoveablePlayer):
@@ -307,27 +370,15 @@ class Ghost(MoveablePlayer):
 
     def update(self):
         """
-        Updates the charater's position each frame
+        Update the charater's position each frame
         Checks if the position can be updated.
         """
         self.move()
         super().update()
 
-    def moves(self):
-        """
-        Returns a (list) of all directions (pygame.Vector2) the ghost can move
-        """
-        walls = [True, True, True, True]
-        directions = [vec(0, -1), vec(0, 1), vec(-1, 0), vec(1, 0)]
-        for i in range(4):
-            if (self._grid_pos + directions[i] not in self.state.walls):
-                walls[i] = False
-        # only return directions without a wall
-        return [directions[i] for i in range(len(walls)) if walls[i] is False]
-
     def can_move(self):
         """
-        Returns a (bool) if there is a wall in the sprites next position
+        Return a (bool) if there is a wall in the sprites next position
             or if the position would put the ghost in a tunnel (False)
             Otherwise return (True)
         """
@@ -347,7 +398,7 @@ class Ghost(MoveablePlayer):
             return
 
         # get all the directions the ghost can move
-        directions = self.moves()
+        directions = self.get_moves()
 
         # if the ghost can move backwards, remove that option
         if self.direction * -1 in directions:
